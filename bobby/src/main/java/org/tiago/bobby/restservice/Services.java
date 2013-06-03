@@ -3,6 +3,8 @@
  */
 package org.tiago.bobby.restservice;
 
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -12,6 +14,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.tiago.bobby.graphdb.ManagedBobbyGraphDB;
 import org.tiago.bobby.types.Friend;
 import org.tiago.bobby.types.Friends;
 import org.tiago.bobby.types.Person;
@@ -28,8 +31,9 @@ public class Services {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String addPerson(Person person) {
-		System.out.println(person.getName());
-		System.out.println(person.getId());
+		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
+		bobbyGraph.addPerson(person.getId(), person.getName());
+		System.out.println("[INSERT] - Name: " + person.getName() + " ID: " + person.getId());
 		return "HTTP CREATED 201";
 	}
 	
@@ -38,8 +42,9 @@ public class Services {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String addFriend(@PathParam("key") long id, Friend friend) {
-		System.out.println("id principal: " + id);
-		System.out.println("id amigo: " + friend.getId());
+		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
+		bobbyGraph.addFriend(id, friend.getId());
+		System.out.println("[ADD FRIEND] - ID: " + id + " ID FRIEND: " + friend.getId());
 		return "HTTP CREATED 201";
 	}
 	
@@ -47,13 +52,12 @@ public class Services {
 	@Path("/person/{key}/friends")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response listFriends(@PathParam("key") long id) {
-		System.out.println("id principal: " + id);
-		Person p1 = new Person("Tiago", 789);
-		Person p2 = new Person("Rayanna", 987);
+		System.out.println("[LIST FRIENDS] - ID: " + id);
+		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
+		List<Person> list = bobbyGraph.listFriends(id); 
 		
 		Friends f = new Friends();
-		f.getFriends().add(p1);
-		f.getFriends().add(p2);
+		f.setFriends(list);
 		
 		return Response.ok(f, MediaType.APPLICATION_JSON).build();
 	}
@@ -64,5 +68,14 @@ public class Services {
 	public Response recommendations(@PathParam("key") long id) {
 		Friends f = new Friends();
 		return Response.ok(f, MediaType.APPLICATION_JSON).build();
+	}
+	
+	@GET
+	@Path("/person/{key}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getPerson(@PathParam("key") long id) {
+		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
+		Person p = bobbyGraph.load(id);
+		return Response.ok(p, MediaType.APPLICATION_JSON).build();
 	}
 }
