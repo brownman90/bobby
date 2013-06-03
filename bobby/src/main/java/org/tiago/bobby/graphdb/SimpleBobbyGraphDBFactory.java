@@ -60,8 +60,8 @@ public class SimpleBobbyGraphDBFactory {
         graph.makeType().name("facebook_id").dataType(Long.class).indexed(INDEX_NAME, Vertex.class).unique(Direction.BOTH).makePropertyKey();
         graph.makeType().name("name").dataType(String.class).unique(Direction.OUT).makePropertyKey();
 
-        graph.makeType().name("knows").makeEdgeLabel();
-        graph.makeType().name("suggested").makeEdgeLabel();
+        graph.makeType().name("knows").unique(Direction.OUT).makeEdgeLabel();
+        graph.makeType().name("suggested").unique(Direction.OUT).makeEdgeLabel();
 
         graph.commit();
         

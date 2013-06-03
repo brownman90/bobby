@@ -38,17 +38,20 @@ public class ManagedBobbyGraphDB {
 		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
 		
 		person.addEdge("knows", personFriend);
+		personFriend.addEdge("knows", person);
+		
 		bobbyGraph.commit();
 	}
 	
 	public List<Person> listFriends(long id) {
 		Vertex person = bobbyGraph.getVertices("facebook_id", id).iterator().next();
 		List<Person> list = new ArrayList<Person>();
-		Vertex friend = null;
+//		Vertex friend = null;
 		Person personF = null;
 		
-		for (Edge edge : person.query().direction(Direction.BOTH).labels("knows").edges()) {
-			friend = edge.getVertex(Direction.IN);
+//		for (Edge edge : person.query().direction(Direction.OUT).labels("knows").edges()) {
+		for (Vertex friend : person.getVertices(Direction.OUT, "knows")) {
+//			friend = edge.getVertex(Direction.IN);
 			personF = new Person((String)friend.getProperty("name"), (Long)friend.getProperty("facebook_id"));
 			list.add(personF);
 		}
