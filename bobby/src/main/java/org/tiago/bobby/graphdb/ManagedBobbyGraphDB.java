@@ -65,16 +65,25 @@ public class ManagedBobbyGraphDB {
 	
 	public List<Person> recommendations(long id) {
 		List<Person> listSuggests = new ArrayList<Person>();
+		List<Person> listSuggestsTemp = new ArrayList<Person>();
 		List<Person> friends = listFriends(id);
 		Map<Long, Integer> suggests = new HashMap<Long, Integer>();
 		Vertex person = load(new Long(id));
 		Person fSuggest = null;
+		
+		Person personSB = null;
+		for (Vertex suggest : person.getVertices(Direction.OUT, "suggested")) {
+			personSB = new Person((String)suggest.getProperty("name"), (Long)suggest.getProperty("facebook_id"));
+			listSuggestsTemp.add(personSB);
+		}
 		
 		for (Vertex friend : person.getVertices(Direction.OUT, "knows")) {
 			for (Vertex friendSuggest : friend.getVertices(Direction.OUT, "knows")) {
 				fSuggest = new Person((String)friendSuggest.getProperty("name"), (Long)friendSuggest.getProperty("facebook_id"));
 				if (!friends.contains(fSuggest)) {
 					if (suggests.get(fSuggest.getId()) == null) {
+						if (((Long)person.getProperty("facebook_id")).equals(fSuggest.getId()) || listSuggestsTemp.contains(fSuggest))
+							continue;
 						suggests.put(fSuggest.getId(), 1);
 						person.addEdge("suggested", friendSuggest);
 						bobbyGraph.commit();

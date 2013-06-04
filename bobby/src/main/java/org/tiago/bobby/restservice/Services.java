@@ -66,7 +66,10 @@ public class Services {
 	@Path("/person/{key}/friends/recommendations")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response recommendations(@PathParam("key") long id) {
+		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
+		List<Person> suggests = bobbyGraph.recommendations(id);
 		Friends f = new Friends();
+		f.setFriends(suggests);
 		return Response.ok(f, MediaType.APPLICATION_JSON).build();
 	}
 	
