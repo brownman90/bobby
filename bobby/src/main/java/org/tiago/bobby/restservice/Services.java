@@ -30,13 +30,13 @@ import com.google.common.util.concurrent.Service;
 public class Services {
 	
 	private Logger logger = Logger.getLogger(Service.class.getName());
+	private ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 
 	@POST
 	@Path("/person")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String addPerson(Person person) {
-		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		bobbyGraph.addPerson(person.getId(), person.getName());
 		logger.info("[INSERT] - Name: " + person.getName() + " | ID: " + person.getId());
 		return "HTTP CREATED 201";
@@ -47,7 +47,6 @@ public class Services {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String addFriend(@PathParam("key") long id, Friend friend) {
-		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		bobbyGraph.addFriend(id, friend.getId());
 		logger.info("[ADD FRIEND] - ID: " + id + " | ID FRIEND: " + friend.getId());
 		return "HTTP CREATED 201";
@@ -57,14 +56,10 @@ public class Services {
 	@Path("/person/{key}/friends")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response listFriends(@PathParam("key") long id) {
-		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
-		List<Person> list = bobbyGraph.listFriends(id); 
-		
+		List<Person> list = bobbyGraph.listFriends(id);		
 		Friends f = new Friends();
 		f.setFriends(list);
-		
 		logger.info("[FRIENDS] - Amigos do ID: " + id);
-		
 		return Response.ok(f, MediaType.APPLICATION_JSON).build();
 	}
 	
@@ -72,7 +67,6 @@ public class Services {
 	@Path("/person/{key}/friends/recommendations")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response recommendations(@PathParam("key") long id) {
-		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		List<Person> suggests = bobbyGraph.recommendations(id);
 		Friends f = new Friends();
 		f.setFriends(suggests);
@@ -84,7 +78,6 @@ public class Services {
 	@Path("/person/{key}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPerson(@PathParam("key") long id) {
-		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		Person p = bobbyGraph.load(id);
 		return Response.ok(p, MediaType.APPLICATION_JSON).build();
 	}
