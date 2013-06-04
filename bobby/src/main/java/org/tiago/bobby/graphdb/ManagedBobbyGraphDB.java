@@ -4,7 +4,9 @@
 package org.tiago.bobby.graphdb;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.tiago.bobby.types.Person;
 
@@ -34,8 +36,10 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public void addFriend(long id, long idFriend) {
-		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
-		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
+//		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
+		Vertex person = load(new Long(id));
+//		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
+		Vertex personFriend = load(new Long(idFriend));
 		
 		person.addEdge("knows", personFriend);
 		personFriend.addEdge("knows", person);
@@ -44,7 +48,7 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public List<Person> listFriends(long id) {
-		Vertex person = bobbyGraph.getVertices("facebook_id", id).iterator().next();
+		Vertex person = load(new Long(id));
 		List<Person> list = new ArrayList<Person>();
 //		Vertex friend = null;
 		Person personF = null;
@@ -59,6 +63,38 @@ public class ManagedBobbyGraphDB {
 		return list;
 	}
 	
+	public List<Person> recommendations(long id) {
+		List<Person> listSuggests = new ArrayList<Person>();
+		List<Person> friends = listFriends(id);
+		Map<Long, Integer> suggests = new HashMap<Long, Integer>();
+		Vertex person = load(new Long(id));
+		Person fSuggest = null;
+		
+		for (Vertex friend : person.getVertices(Direction.OUT, "knows")) {
+			for (Vertex friendSuggest : friend.getVertices(Direction.OUT, "knows")) {
+				fSuggest = new Person((String)friendSuggest.getProperty("name"), (Long)friendSuggest.getProperty("facebook_id"));
+				if (!friends.contains(fSuggest)) {
+					if (suggests.get(fSuggest.getId()) == null) {
+						suggests.put(fSuggest.getId(), 1);
+						person.addEdge("suggested", friendSuggest);
+						bobbyGraph.commit();
+					} else {
+						Integer newSuggest = suggests.get(fSuggest.getId()) + 1;
+						suggests.put(fSuggest.getId(), newSuggest);
+					}
+				}
+			}
+		}
+		
+		Person personS = null;
+		for (Vertex suggest : person.getVertices(Direction.OUT, "suggested")) {
+			personS = new Person((String)suggest.getProperty("name"), (Long)suggest.getProperty("facebook_id"));
+			listSuggests.add(personS);
+		}
+		
+		return listSuggests;
+	}
+	
 	public Person load(long id) {
 		Person person = null;
 		if (bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().hasNext()) {
@@ -68,6 +104,10 @@ public class ManagedBobbyGraphDB {
 			person = new Person("pessoa nao encontrada", -1);
 		}
 		return person;
+	}
+	
+	public Vertex load(Long id) {
+		return bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
 	}
 	
 	public void close() {

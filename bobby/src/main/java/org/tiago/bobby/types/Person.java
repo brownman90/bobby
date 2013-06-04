@@ -43,4 +43,13 @@ public class Person {
 	public void setId(long id) {
 		this.id = id;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (!(obj instanceof Person)) return false;
+		if (((Person)obj) == this) return true;
+		
+		return ((Person)obj).getId() == this.id;
+	}
 }
