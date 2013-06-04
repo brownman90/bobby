@@ -4,6 +4,7 @@
 package org.tiago.bobby.restservice;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -19,12 +20,16 @@ import org.tiago.bobby.types.Friend;
 import org.tiago.bobby.types.Friends;
 import org.tiago.bobby.types.Person;
 
+import com.google.common.util.concurrent.Service;
+
 /**
  * @author tfr_souza
  *
  */
 @Path("/api")
 public class Services {
+	
+	private Logger logger = Logger.getLogger(Service.class.getName());
 
 	@POST
 	@Path("/person")
@@ -33,7 +38,7 @@ public class Services {
 	public String addPerson(Person person) {
 		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		bobbyGraph.addPerson(person.getId(), person.getName());
-		System.out.println("[INSERT] - Name: " + person.getName() + " ID: " + person.getId());
+		logger.info("[INSERT] - Name: " + person.getName() + " | ID: " + person.getId());
 		return "HTTP CREATED 201";
 	}
 	
@@ -44,7 +49,7 @@ public class Services {
 	public String addFriend(@PathParam("key") long id, Friend friend) {
 		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		bobbyGraph.addFriend(id, friend.getId());
-		System.out.println("[ADD FRIEND] - ID: " + id + " ID FRIEND: " + friend.getId());
+		logger.info("[ADD FRIEND] - ID: " + id + " | ID FRIEND: " + friend.getId());
 		return "HTTP CREATED 201";
 	}
 	
@@ -52,12 +57,13 @@ public class Services {
 	@Path("/person/{key}/friends")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response listFriends(@PathParam("key") long id) {
-		System.out.println("[LIST FRIENDS] - ID: " + id);
 		ManagedBobbyGraphDB bobbyGraph = new ManagedBobbyGraphDB();
 		List<Person> list = bobbyGraph.listFriends(id); 
 		
 		Friends f = new Friends();
 		f.setFriends(list);
+		
+		logger.info("[FRIENDS] - Amigos do ID: " + id);
 		
 		return Response.ok(f, MediaType.APPLICATION_JSON).build();
 	}
@@ -70,6 +76,7 @@ public class Services {
 		List<Person> suggests = bobbyGraph.recommendations(id);
 		Friends f = new Friends();
 		f.setFriends(suggests);
+		logger.info("[RECOMMENDATIONS] - Recomendacoes para o ID: " + id);
 		return Response.ok(f, MediaType.APPLICATION_JSON).build();
 	}
 	
