@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.tiago.bobby.types.Person;
+import org.tiago.bobby.types.Suggestion;
 
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.tinkerpop.blueprints.Edge;
@@ -28,23 +29,33 @@ public class ManagedBobbyGraphDB {
 		bobbyGraph = SimpleBobbyGraphDBFactory.getInstance();
 	}
 	
-	public void addPerson(long id, String name) {
-		Vertex person = bobbyGraph.addVertex(null);
-		person.setProperty("facebook_id", id);
-		person.setProperty("name", name);
-		bobbyGraph.commit();
+	public String addPerson(long id, String name) {
+		Person exists = load(id);
+		if (id < 0) return "INVALID ID: NEGATIVE";
+		if (exists.getId() == -1) {
+			Vertex person = bobbyGraph.addVertex(null);
+			person.setProperty("facebook_id", id);
+			person.setProperty("name", name);
+			bobbyGraph.commit();
+			return "CREATED 201";
+		} else {
+			return "ID ALREADY EXISTS";
+		}
 	}
 	
-	public void addFriend(long id, long idFriend) {
+	public String addFriend(long id, long idFriend) {
 //		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
 		Vertex person = load(new Long(id));
 //		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
 		Vertex personFriend = load(new Long(idFriend));
 		
-		person.addEdge("knows", personFriend);
-		personFriend.addEdge("knows", person);
+		if (person == null) return "PERSON NOT FOUND";
+		if (personFriend == null) return "FRIEND NOT FOUND";
 		
+		person.addEdge("knows", personFriend);
+		personFriend.addEdge("knows", person);		
 		bobbyGraph.commit();
+		return "CREATED 201";
 	}
 	
 	public List<Person> listFriends(long id) {
@@ -64,6 +75,7 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public List<Person> recommendations(long id) {
+//		List<Suggestion> listSuggests = new ArrayList<Suggestion>();
 		List<Person> listSuggests = new ArrayList<Person>();
 		List<Person> listSuggestsTemp = new ArrayList<Person>();
 		List<Person> friends = listFriends(id);
@@ -82,8 +94,10 @@ public class ManagedBobbyGraphDB {
 				fSuggest = new Person((String)friendSuggest.getProperty("name"), (Long)friendSuggest.getProperty("facebook_id"));
 				if (!friends.contains(fSuggest)) {
 					if (suggests.get(fSuggest.getId()) == null) {
-						if (((Long)person.getProperty("facebook_id")).equals(fSuggest.getId()) || listSuggestsTemp.contains(fSuggest))
+						if (((Long)person.getProperty("facebook_id")).equals(fSuggest.getId()) || listSuggestsTemp.contains(fSuggest)) {
+							suggests.put(fSuggest.getId(), 1);
 							continue;
+						}
 						suggests.put(fSuggest.getId(), 1);
 						person.addEdge("suggested", friendSuggest);
 						bobbyGraph.commit();
@@ -96,8 +110,10 @@ public class ManagedBobbyGraphDB {
 		}
 		
 		Person personS = null;
+		Suggestion suggested = null;
 		for (Vertex suggest : person.getVertices(Direction.OUT, "suggested")) {
 			personS = new Person((String)suggest.getProperty("name"), (Long)suggest.getProperty("facebook_id"));
+//			suggested = new Suggestion(personS, suggests.get(personS.getId()));
 			listSuggests.add(personS);
 		}
 		
