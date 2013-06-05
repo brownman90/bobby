@@ -19,6 +19,8 @@ import org.tiago.bobby.graphdb.ManagedBobbyGraphDB;
 import org.tiago.bobby.types.Friend;
 import org.tiago.bobby.types.Friends;
 import org.tiago.bobby.types.Person;
+import org.tiago.bobby.types.Suggestion;
+import org.tiago.bobby.types.Suggestions;
 
 import com.google.common.util.concurrent.Service;
 
@@ -37,9 +39,12 @@ public class Services {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String addPerson(Person person) {
-		bobbyGraph.addPerson(person.getId(), person.getName());
-		logger.info("[INSERT] - Name: " + person.getName() + " | ID: " + person.getId());
-		return "HTTP CREATED 201";
+		String retorno = bobbyGraph.addPerson(person.getId(), person.getName());
+		if (retorno.contains("201"))
+			logger.info("[INSERT] - Name: " + person.getName() + " | ID: " + person.getId());
+		else
+			logger.info("[INSERT] - " + retorno);
+		return "HTTP " + retorno;
 	}
 	
 	@POST
@@ -47,9 +52,12 @@ public class Services {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String addFriend(@PathParam("key") long id, Friend friend) {
-		bobbyGraph.addFriend(id, friend.getId());
-		logger.info("[ADD FRIEND] - ID: " + id + " | ID FRIEND: " + friend.getId());
-		return "HTTP CREATED 201";
+		String retorno = bobbyGraph.addFriend(id, friend.getId());
+		if (retorno.contains("201"))
+			logger.info("[ADD FRIEND] - ID: " + id + " | ID FRIEND: " + friend.getId());
+		else
+			logger.info("[ADD FRIEND] - " + retorno);
+		return "HTTP " + retorno;
 	}
 	
 	@GET
@@ -67,7 +75,10 @@ public class Services {
 	@Path("/person/{key}/friends/recommendations")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response recommendations(@PathParam("key") long id) {
+//		List<Suggestion> suggests = bobbyGraph.recommendations(id);
 		List<Person> suggests = bobbyGraph.recommendations(id);
+//		Suggestions s = new Suggestions();
+//		s.setRecommendations(suggests);
 		Friends f = new Friends();
 		f.setFriends(suggests);
 		logger.info("[RECOMMENDATIONS] - Recomendacoes para o ID: " + id);
