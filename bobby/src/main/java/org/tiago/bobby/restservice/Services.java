@@ -86,6 +86,19 @@ public class Services {
 	}
 	
 	@GET
+	@Path("/person/{key}/remove")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	public String removePerson(@PathParam("key") long id) {
+		String retorno = bobbyGraph.remove(id);
+		if (retorno.contains("201"))
+			logger.info("[REMOVE] - ID: " + id);
+		else
+			logger.info("[REMOVE] - " + retorno);
+		return "HTTP " + retorno;
+	}
+	
+	@GET
 	@Path("/person/{key}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPerson(@PathParam("key") long id) {

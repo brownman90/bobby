@@ -5,6 +5,7 @@ package org.tiago.bobby.graphdb;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import org.tiago.bobby.types.Person;
 import org.tiago.bobby.types.Suggestion;
 
 import com.thinkaurelius.titan.core.TitanGraph;
+import com.thinkaurelius.titan.core.TitanTransaction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Query.Compare;
 import com.tinkerpop.blueprints.Direction;
@@ -63,6 +65,8 @@ public class ManagedBobbyGraphDB {
 		List<Person> list = new ArrayList<Person>();
 //		Vertex friend = null;
 		Person personF = null;
+		
+		if (person == null) return list;
 		
 //		for (Edge edge : person.query().direction(Direction.OUT).labels("knows").edges()) {
 		for (Vertex friend : person.getVertices(Direction.OUT, "knows")) {
@@ -131,8 +135,37 @@ public class ManagedBobbyGraphDB {
 		return person;
 	}
 	
+	public String remove(long id) {
+		Vertex personRemove = load(new Long(id));
+		
+		if (personRemove == null) return "ID NOT FOUND";
+		
+		for (Vertex person : personRemove.getVertices(Direction.OUT, "knows")) {
+			for (Edge edge : person.getEdges(Direction.OUT, "knows")) {
+				if (((Long)edge.getVertex(Direction.OUT).getProperty("facebook_id")).equals(id)) {
+					bobbyGraph.removeEdge(edge);
+				}
+			}
+		}
+		
+		for (Edge edge : personRemove.getEdges(Direction.OUT, "knows", "suggested")) {
+			bobbyGraph.removeEdge(edge);
+		}
+		
+		bobbyGraph.removeVertex(personRemove);
+		
+		bobbyGraph.commit();
+		
+		return "REMOVED 201";
+	}
+	
 	public Vertex load(Long id) {
-		return bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
+		Iterator<Vertex> vertexIt = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator();
+		if (vertexIt.hasNext()) {
+			return vertexIt.next();
+		} else {
+			return null;
+		}
 	}
 	
 	public void close() {
