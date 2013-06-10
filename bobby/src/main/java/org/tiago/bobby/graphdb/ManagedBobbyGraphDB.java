@@ -45,8 +45,8 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public String addFriend(long id, long idFriend) {
-		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
-		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
+		Vertex person = loadBlockedVertex(id);
+		Vertex personFriend = loadBlockedVertex(idFriend);
 		
 		if (person == null) return "PERSON NOT FOUND";
 		if (personFriend == null) return "FRIEND NOT FOUND";
@@ -58,7 +58,7 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public List<Person> listFriends(long id) {
-		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
+		Vertex person = loadBlockedVertex(id);
 		List<Person> list = new ArrayList<Person>();
 //		Vertex friend = null;
 		Person personF = null;
@@ -83,7 +83,7 @@ public class ManagedBobbyGraphDB {
 		List<Person> listSuggestsTemp = new ArrayList<Person>();
 		List<Person> friends = listFriends(id);
 		Map<Long, Integer> suggests = new HashMap<Long, Integer>();
-		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
+		Vertex person = loadBlockedVertex(id);
 		Person fSuggest = null;
 		
 		Person personSB = null;
@@ -137,8 +137,7 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public String remove(long id) {
-		Vertex personRemove = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
-		bobbyGraph.commit();
+		Vertex personRemove = loadUnblockedVertex(id);
 		
 		if (personRemove == null) return "ID NOT FOUND";
 		
@@ -151,6 +150,17 @@ public class ManagedBobbyGraphDB {
 		bobbyGraph.commit();
 		
 		return "REMOVED 201";
+	}
+	
+	private Vertex loadBlockedVertex(long id) {
+		Iterator<Vertex> vertexIt = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator();
+		return vertexIt.hasNext() ? vertexIt.next() : null;
+	}
+	
+	private Vertex loadUnblockedVertex(long id) {
+		Iterator<Vertex> vertexIt = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator();
+		bobbyGraph.commit();
+		return vertexIt.hasNext() ? vertexIt.next() : null;
 	}
 	
 	public void close() {
