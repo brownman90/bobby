@@ -13,10 +13,9 @@ import org.tiago.bobby.types.Person;
 import org.tiago.bobby.types.Suggestion;
 
 import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.TitanTransaction;
+import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Query.Compare;
-import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
@@ -46,10 +45,8 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public String addFriend(long id, long idFriend) {
-//		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
-		Vertex person = load(new Long(id));
-//		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
-		Vertex personFriend = load(new Long(idFriend));
+		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
+		Vertex personFriend = bobbyGraph.query().has("facebook_id", Compare.EQUAL, idFriend).vertices().iterator().next();
 		
 		if (person == null) return "PERSON NOT FOUND";
 		if (personFriend == null) return "FRIEND NOT FOUND";
@@ -61,7 +58,7 @@ public class ManagedBobbyGraphDB {
 	}
 	
 	public List<Person> listFriends(long id) {
-		Vertex person = load(new Long(id));
+		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
 		List<Person> list = new ArrayList<Person>();
 //		Vertex friend = null;
 		Person personF = null;
@@ -75,6 +72,8 @@ public class ManagedBobbyGraphDB {
 			list.add(personF);
 		}
 		
+		bobbyGraph.commit();
+		
 		return list;
 	}
 	
@@ -84,7 +83,7 @@ public class ManagedBobbyGraphDB {
 		List<Person> listSuggestsTemp = new ArrayList<Person>();
 		List<Person> friends = listFriends(id);
 		Map<Long, Integer> suggests = new HashMap<Long, Integer>();
-		Vertex person = load(new Long(id));
+		Vertex person = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
 		Person fSuggest = null;
 		
 		Person personSB = null;
@@ -104,7 +103,6 @@ public class ManagedBobbyGraphDB {
 						}
 						suggests.put(fSuggest.getId(), 1);
 						person.addEdge("suggested", friendSuggest);
-						bobbyGraph.commit();
 					} else {
 						Integer newSuggest = suggests.get(fSuggest.getId()) + 1;
 						suggests.put(fSuggest.getId(), newSuggest);
@@ -112,6 +110,8 @@ public class ManagedBobbyGraphDB {
 				}
 			}
 		}
+		
+		bobbyGraph.commit();
 		
 		Person personS = null;
 		Suggestion suggested = null;
@@ -132,21 +132,15 @@ public class ManagedBobbyGraphDB {
 		} else {
 			person = new Person("pessoa nao encontrada", -1);
 		}
+		bobbyGraph.commit();
 		return person;
 	}
 	
 	public String remove(long id) {
-		Vertex personRemove = load(new Long(id));
+		Vertex personRemove = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator().next();
+		bobbyGraph.commit();
 		
 		if (personRemove == null) return "ID NOT FOUND";
-		
-		for (Vertex person : personRemove.getVertices(Direction.OUT, "knows")) {
-			for (Edge edge : person.getEdges(Direction.OUT, "knows")) {
-				if (((Long)edge.getVertex(Direction.OUT).getProperty("facebook_id")).equals(id)) {
-					bobbyGraph.removeEdge(edge);
-				}
-			}
-		}
 		
 		for (Edge edge : personRemove.getEdges(Direction.OUT, "knows", "suggested")) {
 			bobbyGraph.removeEdge(edge);
@@ -157,15 +151,6 @@ public class ManagedBobbyGraphDB {
 		bobbyGraph.commit();
 		
 		return "REMOVED 201";
-	}
-	
-	public Vertex load(Long id) {
-		Iterator<Vertex> vertexIt = bobbyGraph.query().has("facebook_id", Compare.EQUAL, id).vertices().iterator();
-		if (vertexIt.hasNext()) {
-			return vertexIt.next();
-		} else {
-			return null;
-		}
 	}
 	
 	public void close() {
