@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Bobby</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_add_person">Add Person</string>
+    <string name="id_person">Person ID</string>
+    <string name="name_person">Nome</string>
+    <string name="btn_save">Salvar</string>
+    <string name="title_activity_list_friends">List Friends</string>
+    <string name="btn_list">Listar</string>
+    <string name="title_activity_add_friend">Add Friend</string>
+    <string name="id_friend">Friend ID</string>
+    <string name="title_activity_recommendations">Recommendations</string>
+    <string name="title_activity_remove_person">Remove Person</string>
+    <string name="btn_remove">Excluir</string>
+
+</resources>
