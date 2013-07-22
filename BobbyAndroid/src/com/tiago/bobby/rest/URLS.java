@@ -9,7 +9,7 @@ package com.tiago.bobby.rest;
  */
 public interface URLS {
 
-	String HOST = "http://192.168.14.28:8080/bobby/api/";
+	String HOST = "http://endereco:8080/bobby/api/";
 	
 	String ADD_PERSON      = HOST + "person";
 	String ADD_FRIEND      = HOST + "person/{id}/friend";
